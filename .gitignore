@@ -57,5 +57,6 @@ target/
 
 # project
 *settings.yaml
+manifester_inventory.yaml
 manifests/*
 manifester_settings.yaml
