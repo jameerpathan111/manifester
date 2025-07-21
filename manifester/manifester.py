@@ -9,7 +9,7 @@ import random
 import string
 
 from dynaconf.utils.boxing import DynaBox
-from requests.exceptions import RequestException, Timeout
+from requests.exceptions import RequestException
 
 from manifester.helpers import (
     fetch_paginated_data,
@@ -346,7 +346,6 @@ class Manifester:
         Starts the export job, monitors the status of the job, and downloads the manifest on
         successful completion of the job.
         """
-        MAX_REQUESTS = 500
         SUCCESS_CODE = 200
         data = {
             "headers": {"Authorization": f"Bearer {self.access_token}"},
@@ -369,27 +368,24 @@ class Manifester:
             cmd_kwargs=data,
         )
         request_count = 1
-        limit_exceeded = False
         while export_job.status_code != SUCCESS_CODE:
-            export_job = simple_retry(
-                self.requester.get,
-                cmd_args=[
-                    f"{self.allocations_url}/{self.allocation_uuid}/exportJob/{export_job_id}"
-                ],
-                cmd_kwargs=data,
-            )
             logger.debug(f"Attempting to export manifest. Attempt number: {request_count}")
-            if request_count > MAX_REQUESTS:
-                limit_exceeded = True
-                logger.info(
-                    "Manifest export job status check limit exceeded. This may indicate an "
-                    "upstream issue with Red Hat Subscription Management."
+            try:
+                export_job = simple_retry(
+                    self.requester.get,
+                    cmd_args=[
+                        f"{self.allocations_url}/{self.allocation_uuid}/exportJob/{export_job_id}"
+                    ],
+                    cmd_kwargs=data,
                 )
-                raise Timeout("Export timeout exceeded")
+            except TimeoutError as err:
+                if request_count > settings.MAX_EXPORT_RETRIES:
+                    logger.info(
+                        "Manifest export job status check limit exceeded. This may indicate an "
+                        "upstream issue with Red Hat Subscription Management."
+                    )
+                    raise TimeoutError("Export timeout exceeded") from err
             request_count += 1
-        if limit_exceeded:
-            self.content = None
-            return self
         export_job = export_job.json()
         if self.is_mock:
             export_href = export_job.body["href"]

@@ -1,6 +1,7 @@
 #rhsm-manifester settings
 inventory_path: "manifester_inventory.yaml"
 log_level: "info"
+max_export_retries: 5
 offline_token: ""
 proxies: {"https": ""}
 url:

@@ -5,7 +5,6 @@ import string
 import uuid
 
 import pytest
-from requests.exceptions import Timeout
 
 from manifester import Manifester
 from manifester.helpers import (
@@ -242,9 +241,9 @@ def test_negative_manifest_export_timeout():
         manifest_category=MANIFEST_DATA,
         requester=RhsmApiStub(in_dict={"force_export_failure": True}),
     )
-    with pytest.raises(Timeout) as exception:
+    with pytest.raises(TimeoutError) as exception:
         manifester.get_manifest()
-    assert str(exception.value) == "Export timeout exceeded"
+    assert str(exception.value) == "Retry timeout exceeded"
 
 
 def test_get_manifest():

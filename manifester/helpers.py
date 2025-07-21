@@ -28,10 +28,10 @@ def simple_retry(cmd, cmd_args=None, cmd_kwargs=None, max_timeout=240, _cur_time
     logger.debug(f"Sending request to endpoint {cmd_args}")
     response = cmd(*cmd_args, **cmd_kwargs)
     logger.debug(f"Response status code is {response.status_code}")
-    if response.status_code in [429, 500, 504]:
+    if response.status_code in [202, 429, 500, 504]:
         new_wait = _cur_timeout * 2
         if new_wait > max_timeout:
-            raise Exception("Retry timeout exceeded")
+            raise TimeoutError("Retry timeout exceeded")
         logger.debug(f"Trying again in {_cur_timeout} seconds")
         time.sleep(_cur_timeout)
         response = simple_retry(cmd, cmd_args, cmd_kwargs, max_timeout, new_wait)

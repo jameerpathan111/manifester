@@ -8,6 +8,7 @@ validators = [
     Validator("offline_token", must_exist=True),
     Validator("simple_content_access", default="enabled"),
     Validator("username_prefix", len_min=3),
+    Validator("max_export_retries", default=5, is_type_of=int, gt=0),
 ]
 settings = Dynaconf(
     settings_file=str(settings_path.absolute()),
